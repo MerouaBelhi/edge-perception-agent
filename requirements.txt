@@ -1,0 +1,15 @@
+# Full pipeline: training-side export, tracking, benchmark
+ultralytics>=8.3
+onnx>=1.16
+onnxslim
+onnxruntime>=1.18
+opencv-python>=4.8
+numpy
+lap
+fastapi
+uvicorn[standard]
+python-multipart
+pytest
+httpx
+imageio-ffmpeg
+tensorboard  # optional: scripts/training_report.py --tensorboard

@@ -1,0 +1,75 @@
+{
+  "split": "test",
+  "imgsz": 960,
+  "epochs": 60,
+  "mAP50": 0.739,
+  "mAP50-95": 0.446,
+  "per_class": {
+    "person": {
+      "precision": 0.719,
+      "recall": 0.701,
+      "mAP50": 0.725,
+      "mAP50-95": 0.43
+    },
+    "helmet": {
+      "precision": 0.938,
+      "recall": 0.864,
+      "mAP50": 0.957,
+      "mAP50-95": 0.612
+    },
+    "no_helmet": {
+      "precision": 0.762,
+      "recall": 0.626,
+      "mAP50": 0.544,
+      "mAP50-95": 0.292
+    },
+    "vest": {
+      "precision": 0.904,
+      "recall": 0.852,
+      "mAP50": 0.9,
+      "mAP50-95": 0.619
+    },
+    "no_vest": {
+      "precision": 0.778,
+      "recall": 0.741,
+      "mAP50": 0.76,
+      "mAP50-95": 0.45
+    },
+    "mask": {
+      "precision": 0.978,
+      "recall": 0.75,
+      "mAP50": 0.768,
+      "mAP50-95": 0.508
+    },
+    "no_mask": {
+      "precision": 0.846,
+      "recall": 0.834,
+      "mAP50": 0.853,
+      "mAP50-95": 0.428
+    },
+    "other_headwear": {
+      "precision": 0.792,
+      "recall": 0.696,
+      "mAP50": 0.742,
+      "mAP50-95": 0.503
+    },
+    "machinery": {
+      "precision": 0.688,
+      "recall": 0.818,
+      "mAP50": 0.85,
+      "mAP50-95": 0.548
+    },
+    "vehicle": {
+      "precision": 0.732,
+      "recall": 0.508,
+      "mAP50": 0.571,
+      "mAP50-95": 0.317
+    },
+    "safety_cone": {
+      "precision": 0.664,
+      "recall": 0.452,
+      "mAP50": 0.465,
+      "mAP50-95": 0.198
+    }
+  }
+}

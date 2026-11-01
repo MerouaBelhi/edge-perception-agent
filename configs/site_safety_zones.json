@@ -1,0 +1,18 @@
+{
+  "zones": [
+    {
+      "name": "construction_site",
+      "normalized": true,
+      "polygon": [[0.0, 0.35], [1.0, 0.35], [1.0, 1.0], [0.0, 1.0]],
+      "classes": ["person"],
+      "requires": ["helmet", "vest"]
+    },
+    {
+      "name": "paint_room",
+      "normalized": true,
+      "polygon": [[0.7, 0.0], [1.0, 0.0], [1.0, 0.35], [0.7, 0.35]],
+      "classes": ["person"],
+      "requires": ["helmet", "vest", "mask"]
+    }
+  ]
+}

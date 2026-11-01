@@ -1,0 +1,16 @@
+{
+  "zones": [
+    {
+      "name": "restricted_area",
+      "normalized": true,
+      "polygon": [[0.10, 0.55], [0.55, 0.55], [0.60, 0.95], [0.05, 0.95]],
+      "classes": ["person"]
+    },
+    {
+      "name": "loading_bay",
+      "normalized": true,
+      "polygon": [[0.55, 0.40], [0.95, 0.40], [0.98, 0.95], [0.62, 0.95]],
+      "classes": null
+    }
+  ]
+}

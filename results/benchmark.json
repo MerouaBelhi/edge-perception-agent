@@ -1,0 +1,63 @@
+{
+  "meta": {
+    "cpu": "AMD Ryzen 9 7900X 12-Core Processor",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "runs": 50,
+    "input": "640x640, batch 1",
+    "python": "3.11.18"
+  },
+  "results": {
+    "cpu": {
+      "PyTorch FP32 (Ultralytics)": {
+        "mean_ms": 13.445238112471998,
+        "p50_ms": 13.681551557965577,
+        "p95_ms": 15.289398946333677,
+        "fps": 74.37577465231988,
+        "device": "AMD Ryzen 9 7900X 12-Core Processor"
+      },
+      "ONNX Runtime FP32 (hand-written pipeline)": {
+        "mean_ms": 31.542909569106996,
+        "p50_ms": 30.211371486075222,
+        "p95_ms": 40.35787262255325,
+        "fps": 31.702845858563286,
+        "stages_ms": {
+          "pre_ms": 5.8,
+          "infer_ms": 24.27,
+          "post_ms": 0.96
+        },
+        "device": "CPUExecutionProvider"
+      },
+      "ONNX Runtime INT8 (static PTQ)": {
+        "mean_ms": 19.7994625242427,
+        "p50_ms": 19.617346464656293,
+        "p95_ms": 24.524908943567418,
+        "fps": 50.506421513997566,
+        "stages_ms": {
+          "pre_ms": 4.94,
+          "infer_ms": 13.6,
+          "post_ms": 0.75
+        },
+        "device": "CPUExecutionProvider"
+      }
+    },
+    "gpu": {
+      "PyTorch FP32 (Ultralytics)": {
+        "mean_ms": 3.5605042707175016,
+        "p50_ms": 3.5025300458073616,
+        "p95_ms": 4.071700037457049,
+        "fps": 280.8590929729409,
+        "device": "NVIDIA GeForce RTX 4090"
+      },
+      "PyTorch FP16 (Ultralytics, half=True)": {
+        "mean_ms": 3.574483194388449,
+        "p50_ms": 3.5482505336403847,
+        "p95_ms": 4.037672141566872,
+        "fps": 279.76072221290383,
+        "device": "NVIDIA GeForce RTX 4090"
+      }
+    }
+  },
+  "skipped": {
+    "onnx_gpu": "ONNX Runtime fell back to CPUExecutionProvider"
+  }
+}

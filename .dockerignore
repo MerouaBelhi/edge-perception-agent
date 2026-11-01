@@ -1,0 +1,6 @@
+.git
+**/__pycache__
+cpp/build
+results
+assets/*.mp4
+models/*.pt

@@ -1,0 +1,3 @@
+{"zones": [{"name": "construction_site", "normalized": true,
+  "polygon": [[0.0, 0.62], [0.92, 0.62], [0.92, 1.0], [0.0, 1.0]],
+  "classes": ["person"], "requires": ["helmet"]}]}

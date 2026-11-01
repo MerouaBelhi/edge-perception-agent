@@ -1,0 +1,7 @@
+# Minimal runtime for the REST service (no PyTorch, no Ultralytics)
+onnxruntime>=1.18
+opencv-python-headless>=4.8
+numpy
+fastapi
+uvicorn[standard]
+python-multipart

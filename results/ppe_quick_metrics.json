@@ -1,0 +1,27 @@
+{
+  "split": "test",
+  "imgsz": 416,
+  "epochs": 20,
+  "mAP50": 0.641,
+  "mAP50-95": 0.349,
+  "per_class": {
+    "person": {
+      "precision": 0.671,
+      "recall": 0.856,
+      "mAP50": 0.843,
+      "mAP50-95": 0.494
+    },
+    "helmet": {
+      "precision": 0.763,
+      "recall": 0.911,
+      "mAP50": 0.923,
+      "mAP50-95": 0.5
+    },
+    "no_helmet": {
+      "precision": 0.234,
+      "recall": 0.125,
+      "mAP50": 0.158,
+      "mAP50-95": 0.054
+    }
+  }
+}

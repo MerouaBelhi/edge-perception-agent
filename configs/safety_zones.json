@@ -1,0 +1,11 @@
+{
+  "zones": [
+    {
+      "name": "hard_hat_area",
+      "normalized": true,
+      "polygon": [[0.0, 0.35], [1.0, 0.35], [1.0, 1.0], [0.0, 1.0]],
+      "classes": ["person"],
+      "requires": ["helmet"]
+    }
+  ]
+}
