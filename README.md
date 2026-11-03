@@ -90,7 +90,7 @@ Fix (`scripts/prepare_hardhat.py`): 500 images were set aside first and never tr
 
 ![before / after on held-out external images](assets/before_after.jpg)
 
-*Held-out external images, before (left) and after (right). Coloured hard hats that were called "no helmet" or "not hard hat" are recognised.*
+*Held-out external images, before (left) and after (right). Coloured hard hats that were called "no helmet" or "not hard hat" are recognised. **Only hard hats are checked in this comparison** (the external dataset labels heads, not vests), so green `OK` here means *hard hat worn*, not *fully compliant*: these workers have no vests, which the full system flags (top image).*
 
 On the original test split, v2 keeps its behaviour: bare heads called "helmet" 0 %, false alarms on hard hats 2 % (4 % before), hard hats recognised 87 % (83 %), bare heads caught 65 % (68 %). Two costs: 4 of the 191 workers in non-work headwear (2 %) are now accepted as wearing a hard hat (0 before), and the `helmet` *box* mAP50 on the test split fell from 0.96 to 0.84 while the per-worker decisions improved. With 16k extra hard hats in training, the helmet class became more permissive and partly learned the external dataset's box style (see the control experiment below).
 

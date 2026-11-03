@@ -45,7 +45,8 @@ VERDICT = {"ok": COLORS["helmet"], "bad": COLORS["no_helmet"], "unknown": COLORS
 EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
 
-def draw(img, persons, ppe, show_ppe=False, dets=(), hz=None):
+def draw(img, persons, ppe, show_ppe=False, dets=(), hz=None, ok_text="OK"):
+    """ok_text: label of a compliant worker ('hard hat' when only hard hats are checked)."""
     H, W = img.shape[:2]
     thick = max(1, W // 500)
     hz = hz or {"near": {}, "in_cone_area": set(), "hull": None}
@@ -77,11 +78,12 @@ def draw(img, persons, ppe, show_ppe=False, dets=(), hz=None):
         x1, y1, x2, y2 = map(int, p["box"])
         _, verdict = ppe_summary(p)
         label = short_label(p)
+        label = ok_text if label == "OK" else label
         extra = [t for t, hit in (("near machine", p["track_id"] in hz["near"]),
                                   ("in cone area", p["track_id"] in hz["in_cone_area"])) if hit]
         if extra:
             verdict = "bad"
-            label = " | ".join(([] if label == "OK" else [label]) + extra)
+            label = " | ".join(([] if label == ok_text else [label]) + extra)
         col = VERDICT[verdict]
         cv2.rectangle(img, (x1, y1), (x2, y2), col, thick + 1)
         # font sized to the person: the label must not be much wider than its box

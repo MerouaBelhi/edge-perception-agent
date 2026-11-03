@@ -88,7 +88,9 @@ def main():
         for k, d in dets.items():
             dts, persons, _ = run(d, img, base)
             ppe = [x for x in dts if x["cls_name"] != "person"]
-            pic = draw(img.copy(), persons, ppe, False, dts, None)
+            # only hard hats are compared (this dataset labels heads, not vests), so a
+            # compliant worker is labelled 'hard hat', not 'OK'
+            pic = draw(img.copy(), persons, ppe, False, dts, None, ok_text="hard hat")
             nk = nb if k == "before" else na
             panels.append(label_bar(pic, f"{k}: {nk}/{n} heads correct", nk == n))
         cv2.imwrite(str(out / sub / Path(path).name), np.hstack(panels))
