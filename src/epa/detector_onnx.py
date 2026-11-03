@@ -92,7 +92,7 @@ class OnnxYoloDetector:
 
     def postprocess(self, output: np.ndarray, scale: float, px: int, py: int,
                     frame_shape) -> list[dict]:
-        preds = output[0].T                       # (8400, 84)
+        preds = output[0].T                       # (anchors, 4 + classes), e.g. (8400, 84) at 640 px
         boxes_cxcywh = preds[:, :4]
         scores_all = preds[:, 4:]
         cls_ids = scores_all.argmax(axis=1)
@@ -113,8 +113,10 @@ class OnnxYoloDetector:
         x1, x2 = np.clip(x1, 0, W), np.clip(x2, 0, W)
         y1, y2 = np.clip(y1, 0, H), np.clip(y2, 0, H)
 
-        # Class-aware NMS: offset boxes per class so different classes never suppress each other
-        offset = cls_ids.astype(np.float32) * 4096.0
+        # Class-aware NMS: shift each class into its own region of the plane so different
+        # classes never suppress each other. The shift must exceed the image size: a fixed
+        # 4096 px let classes overlap (and suppress each other) on photos wider than that.
+        offset = cls_ids.astype(np.float32) * float(max(H, W) + 1)
         nms_boxes = np.stack([x1 + offset, y1, x2 - x1, y2 - y1], axis=1).tolist()
         idx = cv2.dnn.NMSBoxes(nms_boxes, scores.tolist(), self.conf_thres, self.iou_thres)
         idx = np.array(idx).flatten() if len(idx) else []

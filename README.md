@@ -15,7 +15,7 @@
 | **Evaluation** | Per-worker evaluation (not only mAP), an external dataset with a held-out part, before / after per image, a control training run |
 | **Edge deployment** | ONNX export, hand-written pre/post-processing and NMS in Python and C++, static INT8 quantization (1.9× faster, 3.3× smaller), FastAPI service in Docker without PyTorch |
 | **Scene agent** | LLM with tool calling over the tracker logs + a VLM that checks each violation's evidence crop; runs locally with Ollama |
-| **Quality** | 79 unit tests (rules, hazards, zones, agent, dataset scripts), GitHub Actions CI |
+| **Quality** | 81 unit tests (detector post-processing, rules, hazards, zones, agent, dataset scripts), GitHub Actions CI |
 
 ---
 

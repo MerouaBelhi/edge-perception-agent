@@ -60,7 +60,7 @@ def decision_for(head_box, persons, cfg):
 
 def main():
     a = argparse.ArgumentParser()
-    a.add_argument("--model", default="models/site11_960.onnx")
+    a.add_argument("--model", default="models/site11hh_v2.onnx")
     a.add_argument("--n", type=int, default=300, help="number of images")
     a.add_argument("--conf", type=float, default=0.3)
     a.add_argument("--out", default="results/external")

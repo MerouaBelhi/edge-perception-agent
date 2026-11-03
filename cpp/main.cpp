@@ -159,7 +159,8 @@ public:
             bh = std::min(bh, frame.rows - y1);
             boxes.emplace_back(x1, y1, bw, bh);
             // class-aware NMS: shift each class into its own region of the plane
-            int off = max_loc.x * 4096;
+            // (by more than the image size, so classes never overlap, even on large photos)
+            int off = max_loc.x * (std::max(frame.cols, frame.rows) + 1);
             nms_boxes.emplace_back(static_cast<int>(x1) + off, static_cast<int>(y1),
                                    static_cast<int>(bw), static_cast<int>(bh));
             scores.push_back(static_cast<float>(max_score));

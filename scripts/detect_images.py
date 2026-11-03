@@ -98,7 +98,7 @@ def draw(img, persons, ppe, show_ppe=False, dets=(), hz=None):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--source", required=True, help="image file or folder")
-    p.add_argument("--model", default="models/ppe_yolov8n.onnx")
+    p.add_argument("--model", default="models/site11hh_v2.onnx")
     p.add_argument("--conf", type=float, default=0.3)
     p.add_argument("--out", default="results/images")
     p.add_argument("--limit", type=int, default=None, help="max number of images")

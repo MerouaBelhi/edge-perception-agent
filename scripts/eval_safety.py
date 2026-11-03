@@ -214,9 +214,9 @@ def head_row(name, c):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--data", default="datasets/ppe3")
+    p.add_argument("--data", default="datasets/site11")
     p.add_argument("--split", default="val", choices=["train", "val", "test"])
-    p.add_argument("--model", default="models/ppe_yolov8n.onnx")
+    p.add_argument("--model", default="models/site11hh_v2.onnx")
     p.add_argument("--conf", type=float, default=0.3)
     p.add_argument("--sweep", action="store_true", help="compare all rule variants")
     p.add_argument("--out", default=None, help="markdown output (default results/eval_<split>.md)")
