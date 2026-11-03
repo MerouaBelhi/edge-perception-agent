@@ -300,7 +300,7 @@ The released model is the fourth generation. The earlier steps are kept here bec
 | [Hard Hat Workers](https://huggingface.co/datasets/Voxel51/hard-hat-detection) (Voxel51) | CC0 | training + 500 held-out images (external test) |
 | [Construction-PPE](https://docs.ultralytics.com/datasets/detect/construction-ppe/) (Ultralytics) | AGPL-3.0 | first model only (`ppe3`), not the released one |
 
-Training uses [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics) (AGPL-3.0). The code written for this project is under the MIT license (below); models trained with Ultralytics are subject to its license.
+Training uses [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics) (AGPL-3.0), so this project, including the released models, is distributed under the same license.
 
 ---
 
@@ -349,4 +349,4 @@ docs/training/       per-epoch tables and evaluation results
 
 ## License
 
-MIT (project code). See *Data and licenses* above for the datasets and Ultralytics.
+[AGPL-3.0](LICENSE), the license of Ultralytics YOLOv8, which this project builds on. The datasets keep their own licenses (see *Data and licenses* above).
