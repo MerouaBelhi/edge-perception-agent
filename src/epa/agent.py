@@ -6,9 +6,9 @@ tools query what the tracker logged (exact counts, times, occupancy), and the
 visual questions the tracker cannot answer (clothing, actions, scene context).
 
     # one question
-    python -m epa.agent --run results/street -q "How many people entered the crosswalk after 10 s?"
+    python -m epa.agent --run results/site -q "Which workers entered the site without a hard hat?"
     # interactive
-    python -m epa.agent --run results/street
+    python -m epa.agent --run results/site
 """
 
 from __future__ import annotations
@@ -74,7 +74,8 @@ TOOLS = [
           "When one tracked object was first and last seen, and its zone events.",
           {"track_id": {"type": "integer"}}, ["track_id"]),
     _tool("list_violations",
-          "Helmet violations (safety runs only), optionally filtered by zone and time window.",
+          "Safety violations (missing hard hat / vest / mask, machine proximity, coned-off area entry), "
+          "optionally filtered by zone and time window.",
           {"zone": {"type": "string"},
            "t_start": {"type": "number"}, "t_end": {"type": "number"}}),
     _tool("ppe_status_at",

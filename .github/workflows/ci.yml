@@ -11,6 +11,6 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install
-        run: pip install numpy pytest httpx
+        run: pip install numpy pytest httpx opencv-python-headless onnxruntime pyyaml
       - name: Unit tests
         run: PYTHONPATH=src pytest -q tests

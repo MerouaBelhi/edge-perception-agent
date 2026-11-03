@@ -7,8 +7,8 @@
 //
 // Usage:
 //   ./epa_infer <model.onnx> <image|video|camera_index> [out_path] [conf] [iou]
-//   ./epa_infer models/yolov8n.onnx assets/bus.jpg results/cpp_bus.jpg
-//   ./epa_infer models/yolov8n.onnx assets/test_pan.mp4 results/cpp_demo.mp4
+//   ./epa_infer models/site11hh_v2_int8.onnx path/to/site.jpg results/cpp_site.jpg
+//   ./epa_infer models/site11hh_v2_int8.onnx path/to/site.mp4 results/cpp_site.mp4
 
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/dnn.hpp>

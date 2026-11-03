@@ -1,6 +1,6 @@
 """Latency benchmark on one machine: CPU section + GPU section.
 
-    python scripts/benchmark.py --images assets --runs 50
+    python scripts/benchmark.py --images datasets/site11/images/test --runs 50
 
 CPU rows (speed-up vs PyTorch FP32 on CPU):
     PyTorch FP32 | ONNX Runtime FP32 (hand-written pipeline) | ONNX Runtime INT8
@@ -127,7 +127,7 @@ def table(rows: dict, base_label: str) -> list[str]:
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--images", default="assets")
+    p.add_argument("--images", required=True, help="folder of test images")
     p.add_argument("--pt", default="models/yolov8n.pt")
     p.add_argument("--onnx", default="models/yolov8n.onnx")
     p.add_argument("--int8", default="models/yolov8n_int8.onnx")

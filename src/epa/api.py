@@ -19,9 +19,11 @@ from fastapi.responses import Response
 
 from epa.detector_onnx import OnnxYoloDetector
 
-MODEL_PATH = os.getenv("EPA_MODEL", "models/yolov8n_int8.onnx")
-if not os.path.exists(MODEL_PATH):
-    MODEL_PATH = "models/yolov8n.onnx"
+# released safety model first (INT8, then FP32), COCO model as a fallback
+MODEL_PATH = os.getenv("EPA_MODEL") or next(
+    (m for m in ("models/site11hh_v2_int8.onnx", "models/site11hh_v2.onnx",
+                 "models/yolov8n_int8.onnx", "models/yolov8n.onnx") if os.path.exists(m)),
+    "models/yolov8n.onnx")
 
 app = FastAPI(title="Edge Perception Agent", version="0.1.0",
               description="Object detection served with a hand-written ONNX Runtime pipeline.")

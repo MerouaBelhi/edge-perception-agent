@@ -1,5 +1,6 @@
 # Lightweight inference image: ONNX Runtime + FastAPI, no PyTorch.
-# Build after exporting the model (models/yolov8n.onnx or models/yolov8n_int8.onnx):
+# Build after putting a model in models/ (site11hh_v2_int8.onnx from the Releases page,
+# or any ONNX file; EPA_MODEL picks one explicitly):
 #   docker build -t edge-perception-agent .
 #   docker run -p 8000:8000 edge-perception-agent
 FROM python:3.11-slim

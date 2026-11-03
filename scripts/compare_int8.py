@@ -1,7 +1,7 @@
 """Accuracy check after quantization: detections of the FP32 and INT8 models
 on the same images, side by side.
 
-    python scripts/compare_int8.py --images assets
+    python scripts/compare_int8.py --images datasets/site11/images/test
 
 Writes results/int8_check.md (table for the README).
 """
@@ -25,7 +25,7 @@ def iou(a, b) -> float:
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--images", default="assets")
+    p.add_argument("--images", required=True, help="folder of test images")
     p.add_argument("--fp32", default="models/yolov8n.onnx")
     p.add_argument("--int8", default="models/yolov8n_int8.onnx")
     p.add_argument("--conf", type=float, default=0.3)
