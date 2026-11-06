@@ -4,6 +4,9 @@ directions (fixed and broken), so the review is not cherry-picked.
 
     python scripts/compare_models.py --before models/site11_960.onnx --after models/site11hh.onnx \\
         --holdout results/hardhat_holdout.txt --out results/compare
+    # README figure, full decision (hard hat + vest) drawn:
+    python scripts/compare_models.py --before models/site11_960.onnx --after models/site11hh_v2.onnx \
+        --out results/compare_vest --check-vest --panel 4
 
 Per image, every labelled head (helmet / bare head) is scored correct or not for
 each model (same rule as external_test.py). Images are ranked by
@@ -53,12 +56,18 @@ def main():
     p.add_argument("--holdout", default="results/hardhat_holdout.txt")
     p.add_argument("--out", default="results/compare")
     p.add_argument("--n", type=int, default=12)
+    p.add_argument("--check-vest", action="store_true",
+                   help="draw the full decision (hard hat + vest) instead of the hard hat only; "
+                        "the head counts in the title bars do not change")
+    p.add_argument("--panel", type=int, default=0, metavar="K",
+                   help="also stack the K most improved pairs into <out>/before_after.jpg")
     a = p.parse_args()
 
     import fiftyone as fo
     ds = fo.load_dataset("epa-hardhat").select(Path(a.holdout).read_text().split())
     dets = {k: OnnxYoloDetector(m, conf_thres=0.3) for k, m in (("before", a.before), ("after", a.after))}
-    base = SafetyConfig()
+    base = SafetyConfig()                       # scoring: hard hat decisions only
+    show = replace(base, check_vest=a.check_vest)   # drawing
     rows = []
     for s in ds:
         img = cv2.imread(s.filepath)
@@ -82,18 +91,30 @@ def main():
     rows.sort(key=lambda r: -r[0])
     picks = [("improved", r) for r in rows[:a.n] if r[0] > 0] + \
             [("worse", r) for r in rows[::-1][:a.n] if r[0] < 0]
-    for sub, (delta, fixed, broken, nb, na, n, path) in picks:
+    pairs = []
+    for rank, (sub, (delta, fixed, broken, nb, na, n, path)) in enumerate(picks):
         img = cv2.imread(path)
         panels = []
         for k, d in dets.items():
-            dts, persons, _ = run(d, img, base)
+            dts, persons, _ = run(d, img, show)
             ppe = [x for x in dts if x["cls_name"] != "person"]
-            # only hard hats are compared (this dataset labels heads, not vests), so a
-            # compliant worker is labelled 'hard hat', not 'OK'
-            pic = draw(img.copy(), persons, ppe, False, dts, None, ok_text="hard hat")
+            # without --check-vest only hard hats are judged (this dataset labels heads,
+            # not vests), so a compliant worker is labelled 'hard hat', not 'OK'
+            pic = draw(img.copy(), persons, ppe, False, dts, None,
+                       ok_text="OK" if a.check_vest else "hard hat")
             nk = nb if k == "before" else na
             panels.append(label_bar(pic, f"{k}: {nk}/{n} heads correct", nk == n))
-        cv2.imwrite(str(out / sub / Path(path).name), np.hstack(panels))
+        pair = np.hstack(panels)
+        cv2.imwrite(str(out / sub / f"{rank:02d}_{Path(path).name}"), pair)
+        if sub == "improved":
+            pairs.append(pair)
+    if a.panel and pairs:
+        width = 832
+        rows_img = [cv2.resize(x, (width, round(x.shape[0] * width / x.shape[1])))
+                    for x in pairs[:a.panel]]
+        cv2.imwrite(str(out / "before_after.jpg"), np.vstack(rows_img),
+                    [cv2.IMWRITE_JPEG_QUALITY, 88])
+        print(f"panel of {len(rows_img)} pairs -> {out / 'before_after.jpg'}")
 
     tot = np.array([r[1:6] for r in rows]).sum(0)
     print(f"{len(rows)} images | heads fixed {tot[0]}, broken {tot[1]} | correct before "
