@@ -17,15 +17,15 @@ Current rules, full breakdown (rows: label, columns: system decision; 'other' = 
 
 | Rules | Missing vests caught ↑ | Missing vests called 'vest' ↓ | False alarms on vests ↓ | Vests recognised ↑ |
 |---|---:|---:|---:|---:|
-| vest rules (default) | 74% | 0% | 7% | 80% |
+| vest rules (default) | 74% | 0% | 7% | 52% |
 
 Vest, default rules (rows: label, columns: system decision):
 
 | Label | vest | no_vest | unknown | person not detected |
 |---|---:|---:|---:|---:|
-| vest | 49 | 4 | 2 | 6 |
+| vest | 32 | 4 | 19 | 6 |
 | no_vest | 0 | 64 | 10 | 13 |
-| unlabelled | 1 | 165 | 36 | 139 |
+| unlabelled | 0 | 165 | 37 | 139 |
 
 **Masks** (test split: 26 labelled masks, 69 without; masks are never inferred, only detected)
 

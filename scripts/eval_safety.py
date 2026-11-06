@@ -67,6 +67,11 @@ VEST_VARIANTS = {
     "fixed torso band 15-95 %": {"full_body_ratio": 0.0, "torso_bottom": 0.95},
     "vest >= 0.2 person width": {"min_vest_width": 0.2},
     "vest >= 0.4 person width": {"min_vest_width": 0.4},
+    "no vest score threshold": {"min_vest_conf": 0.0},
+    "vest score >= 0.4": {"min_vest_conf": 0.4},
+    "vest score >= 0.5": {"min_vest_conf": 0.5},
+    "vest score >= 0.6": {"min_vest_conf": 0.6},
+    "vest score >= 0.7": {"min_vest_conf": 0.7},
 }
 
 

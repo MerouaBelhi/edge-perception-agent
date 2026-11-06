@@ -482,3 +482,26 @@ def test_hard_hat_on_close_up_head_is_found():
     p = {"cls_name": "person", "score": 0.9, "box": [213, 58, 638, 550]}
     hat = {"cls_name": "helmet", "score": 0.8, "box": [210, 40, 380, 460]}
     assert frame_status([p, hat], SafetyConfig())[0]["ppe"] == "helmet"
+
+
+def test_weak_vest_is_neither_ok_nor_an_alarm():
+    # real case: a red and a pink shirt detected as vests at medium scores -> "OK".
+    # Below min_vest_conf the worker is "unknown": not accepted, and no false alarm.
+    from epa.safety import frame_status
+    p = {"cls_name": "person", "score": 0.9, "box": [100, 100, 150, 250]}
+    weak = dict(vest_on(dict(p)), score=0.35)
+    strong = dict(vest_on(dict(p)), score=0.85)
+    cfg = SafetyConfig(check_vest=True, min_vest_conf=0.5)
+    assert frame_status([p, weak], cfg)[0]["vest"] == "unknown"
+    assert frame_status([p, strong], cfg)[0]["vest"] == "vest"
+    off = SafetyConfig(check_vest=True, min_vest_conf=0.0)
+    assert frame_status([p, weak], off)[0]["vest"] == "vest"                             # rule off
+
+
+def test_weak_vest_in_video_never_counts_as_worn():
+    z = Zone("site", ZONE, classes={"person"}, requires={"helmet", "vest"})
+    mon = SafetyMonitor([z], SafetyConfig(min_vest_conf=0.5))
+    for i in range(30):
+        p = tall(1, 60, 190)
+        step(z, mon, i, [p, helmet_on(p), dict(vest_on(p), score=0.35)])
+    assert mon.states[1].vest_status == "unknown" and mon.violations == []

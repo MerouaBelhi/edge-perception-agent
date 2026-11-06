@@ -4,7 +4,7 @@
 
 ![results on construction-site images](assets/results_panel.jpg)
 
-*Released model on held-out construction-site images. Green `OK`: hard hat and vest worn. Red: what is missing (`no vest`, `no helmet`, `not hard hat` = non-work headwear). Grey `?`: cannot be judged (operator in a cab, person too small or hidden). Yellow: machines and vehicles.*
+*Released model on held-out construction-site images. Green `OK`: hard hat and vest worn. Red: what is missing (`no vest`, `no helmet`, `not hard hat` = non-work headwear). Grey `?`: cannot be judged (operator in a cab, person too small or hidden), and `? vest`: a vest detected with too little confidence to be trusted (bottom middle: a worker in red clothing, not accepted as wearing a vest). Yellow: machines and vehicles.*
 
 | Part | What is implemented |
 |---|---|
@@ -29,8 +29,10 @@ mAP scores boxes; what matters for safety is the decision taken for each worker.
 |---|---:|---:|---:|---:|
 | Hard hat (40 bare heads, 101 worn) | 65 % | **0 %** | 2 % | 87 % |
 | Hard hat: non-work headwear (191) | 71 % | 2 % | | |
-| Vest (87 without, 61 with) | 79 % | **0 %** | 2 % | 87 % |
+| Vest (87 without, 61 with) | 79 % | **0 %** | 2 % | 67 % ¹ |
 | Mask (69 without, 26 with; never inferred) | 77 % | **0 %** | 0 % | 73 % |
+
+¹ A vest is accepted only when detected with a score ≥ 0.6; below that, the worker is *unknown* (`?`): neither accepted nor alarmed. This removed coloured shirts accepted as vests on new sites, at the cost of more `?` (87 % → 67 % of real vests recognised on single images; on video a vest needs only one confident frame). See *Development history*, step 5.
 
 | **External** held-out images: new sites, cameras and people (1995 hard hats, 591 bare heads) | |
 |---|---:|
@@ -56,7 +58,7 @@ Vehicles and cones are the weakest classes (recall 0.36 and 0.41: few examples i
 1. **Detect** every frame (11 classes above).
 2. **Associate** each PPE box to one tracked person: hard hats and headwear to the **head** region, vests to the **torso**, masks to the **face**. The regions adapt to upper-body close-ups (a box less than twice as tall as it is wide). With workers close together, the nearest region wins and each box is used once. A PPE box must be wide enough for the person (`--min-ppe-width`), so the helmet of a worker standing behind is not given to the one in front.
 3. **Infer what is missing.** The `no_helmet` class is weak (mAP50 0.52), so a **missing** hard hat on a **clearly visible** head (person large enough at the detector's resolution, not cut by the image border, not hidden behind someone nearer the camera, no PPE box of any kind on the head) also counts as evidence. The same holds for vests. Masks are never inferred from absence. A worker in `other_headwear` has no hard hat, and the alert says *non-work headwear*, not *no helmet*.
-4. **Vote over time.** Per worker, a vote over the last 1.5 s gives `helmet`, `no_helmet` or `unknown` (and the same for vest and mask). A vest does not come off in 1.5 s, so "no vest" needs ≥ 90 % of the window without one.
+4. **Vote over time.** Per worker, a vote over the last 1.5 s gives `helmet`, `no_helmet` or `unknown` (and the same for vest and mask). A vest does not come off in 1.5 s, so "no vest" needs ≥ 90 % of the window without one. A vest box is trusted only from a score of 0.6: a weaker one makes the torso `unknown`, so a coloured shirt is never accepted as a vest, and never raises an alarm either.
 5. **Apply the zone rule.** Each zone lists what it requires (`configs/site_safety_zones.json`: `"requires": ["helmet", "vest"]`, a paint room adds `"mask"`). A missing item inside such a zone for ≥ 1 s gives **one** violation, re-armed only when the worker leaves or the item is seen again for 2 s.
 6. **Save evidence.** The worker's crop goes to `evidence/`, and the violation records how it was decided (`detected` or `inferred_from_absence`). The agent's `inspect_violation` tool asks the vision model to check the crop.
 
@@ -90,7 +92,7 @@ Fix (`scripts/prepare_hardhat.py`): 500 images were set aside first and never tr
 
 ![before / after on held-out external images](assets/before_after.jpg)
 
-*Held-out external images, before (left) and after (right), with the full decision drawn (hard hat + vest). Before, coloured hard hats were judged "no helmet" or "not hard hat"; after, they are recognised, and the alert that remains, "no vest", is correct: these workers wear no high-visibility vest. The title bars count hard-hat decisions only, since this dataset labels heads, not vests. Visible remaining errors: two workers in a red and a pink shirt accepted as wearing a vest (`OK`, second row), a few people too small to judge (`?`), and mirrored copies at the bottom of each image, which come from the dataset's padding. Pairs chosen automatically (most improved), made with `scripts/compare_models.py --check-vest --panel 4`.*
+*Held-out external images, before (left) and after (right), with the full decision drawn (hard hat + vest). Before, coloured hard hats were judged "no helmet" or "not hard hat"; after, they are recognised, and the alert that remains, "no vest", is correct: these workers wear no high-visibility vest. The title bars count hard-hat decisions only, since this dataset labels heads, not vests. In the second row, a red and a pink shirt were first accepted as vests (`OK`); with the minimum vest score (*Development history*, step 5) they are now `? vest`: not accepted, and no false alarm. Also visible: a few people too small to judge (`?`), and mirrored copies at the bottom of each image, which come from the dataset's padding. Pairs chosen automatically (most improved), made with `scripts/compare_models.py --check-vest --panel 4`.*
 
 On the original test split, v2 keeps its behaviour: bare heads called "helmet" 0 %, false alarms on hard hats 2 % (4 % before), hard hats recognised 87 % (83 %), bare heads caught 65 % (68 %). Two costs: 4 of the 191 workers in non-work headwear (2 %) are now accepted as wearing a hard hat (0 before), and the `helmet` *box* mAP50 on the test split fell from 0.96 to 0.84 while the per-worker decisions improved. With 16k extra hard hats in training, the helmet class became more permissive and partly learned the external dataset's box style (see the control experiment below).
 
@@ -152,7 +154,7 @@ Per-epoch tables (box, cls and dfl losses, train and validation, and validation 
 | Test: non-work headwear caught ↑ / called "helmet" ↓ | 71 % / 2 % | 74 % / 1 % |
 | Test: missing vests caught ↑ / called "vest" ↓ | 79 % / 0 % | 74 % / 0 % |
 | Test: **false alarms on vests** ↓ | 2 % | **7 %** |
-| Test: vests recognised ↑ | 87 % | 80 % |
+| Test: vests recognised ↑ | 67 % | 52 % |
 | Test: missing masks caught ↑ / masks recognised ↑ | 77 % / 73 % | 71 % / 69 % |
 | External: bare heads caught ↑ / called "helmet" ↓ | 70 % / 3 % | 70 % / 4 % |
 | External: false alarms on hard hats ↓ / hard hats recognised ↑ | 1 % / 70 % | 2 % / 69 % |
@@ -288,6 +290,17 @@ The released model is the fourth generation. The earlier steps are kept here bec
 **3. Non-work headwear: `other_headwear`.** AI-generated test clips showed **a straw sun hat and a bicycle helmet accepted as hard hats**: a model that knows only "hard hat" and "bare head" takes anything rigid on a head for a helmet, and the VLM cannot catch an accepted helmet since only alerts are sent to it. `site11` adds an `other_headwear` class from Open Images (bicycle helmets, sun hats, cowboy hats, swim caps...; images with Open Images' mixed "Helmet" class are skipped), plus `no_vest`, `mask`, `no_mask` from Construction Site Safety and `machinery`, `vehicle`, `safety_cone`. Fine-tuning it at 960 px instead of 640 px (`site11_960`) recognised more hard hats (80 % → 83 %) and caught more bare heads (62 % → 68 %), at about twice the inference time.
 
 **4. New sites: Hard Hat Workers** (section above): coloured hard hats, pseudo-labels, and the person threshold that made v2.
+
+**5. Coloured shirts accepted as vests.** Drawing the full decision on the external before / after images showed two workers without vests marked `OK`: a red and a pink shirt detected as vests. This is the most dangerous error (a missing item accepted), and the test split had not shown it (0 %). `scripts/ppe_scores.py` gave the two boxes scores of **0.43 and 0.57**, below the real detections in the image (0.67–0.79). A minimum vest score was then swept on the test split (`eval_safety.py --sweep`):
+
+| Minimum vest score | none | 0.4 | 0.5 | **0.6** | 0.7 |
+|---|---:|---:|---:|---:|---:|
+| Missing vests accepted ↓ | 0 % | 0 % | 0 % | **0 %** | 0 % |
+| False alarms on vests ↓ | 2 % | 2 % | 2 % | **2 %** | 2 % |
+| Real vests recognised (rest: `?`) ↑ | 87 % | 87 % | 84 % | **67 %** | 56 % |
+| The two shirts | `OK` | `OK` | 1 `OK` | **`?`** | `?` |
+
+0.6 is the lowest value that removes both errors. Because a weak vest becomes `unknown` and not "no vest", false alarms do not change; the cost is more `?` on single images. In a safety system an uncertain "I don't know", which goes to review (or to the VLM), is preferable to a wrong `OK`, which nobody looks at.
 
 ---
 

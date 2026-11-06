@@ -88,6 +88,11 @@ class SafetyConfig:
                                         # IS worn); a detected no_vest box only needs vote_ratio
     min_vest_width: float = 0.30        # vest box >= this x person width: the vest of a worker
                                         # behind, seen through a near worker's torso, is narrower
+    min_vest_conf: float = 0.6          # a vest box below this score is not trusted: the worker is
+                                        # "unknown" (not OK, no alarm). Found on external images: a red
+                                        # and a pink shirt taken for vests at 0.43 and 0.57 -> "OK".
+                                        # Test split: no new false alarms, but vests recognised
+                                        # 87 % -> 67 % (the rest become "unknown")
     dedupe_persons: bool = True         # single images: drop a second, nested box on the same
                                         # person (upper body inside full body); the video uses
                                         # tracking + the duplicate-alert guard instead
@@ -219,10 +224,21 @@ def associate(persons: list[dict], ppe: list[dict], cfg: SafetyConfig) -> dict[i
                   head_region, scale_ok, cfg)
 
 
+WEAK_VEST = "weak_vest"
+
+
 def associate_torso(persons: list[dict], dets: list[dict], cfg: SafetyConfig) -> dict[int, str]:
-    """{track_id: "vest" | "no_vest"}."""
-    return _match(persons, [d for d in dets if d["cls_name"] in cfg.torso_classes],
-                  torso_region, vest_ok_size, cfg)
+    """{track_id: "vest" | "no_vest" | "weak_vest"}. A vest box below cfg.min_vest_conf
+    still occupies the torso (so no "no vest" is inferred) but is returned as
+    "weak_vest": the caller treats it as "unknown", never as a worn vest."""
+    boxes = []
+    for d in dets:
+        if d["cls_name"] not in cfg.torso_classes:
+            continue
+        if d["cls_name"] == cfg.vest_class and d["score"] < cfg.min_vest_conf:
+            d = dict(d, cls_name=WEAK_VEST)
+        boxes.append(d)
+    return _match(persons, boxes, torso_region, vest_ok_size, cfg)
 
 
 def associate_vests(persons: list[dict], vests: list[dict], cfg: SafetyConfig) -> set[int]:
@@ -350,8 +366,11 @@ def frame_status(dets: list[dict], cfg: SafetyConfig) -> list[dict]:
     if cfg.check_vest:
         torso = associate_torso(persons, dets, cfg)
         for p in persons:
-            p["vest"] = torso.get(p["track_id"]) or (
-                "no_vest" if torso_clearly_visible(p, persons, dets, cfg) else "unknown")
+            v = torso.get(p["track_id"])
+            if v == WEAK_VEST:
+                p["vest"] = "unknown"
+            else:
+                p["vest"] = v or ("no_vest" if torso_clearly_visible(p, persons, dets, cfg) else "unknown")
     if cfg.check_mask:
         face = associate_masks(persons, dets, cfg)
         for p in persons:
@@ -465,6 +484,8 @@ class SafetyMonitor:
                 vote = torso.get(tid)
                 if vote is None and torso_clearly_visible(p, persons, others, cfg):
                     vote = INFERRED_NO_VEST
+                if vote == WEAK_VEST:
+                    vote = None                     # an untrusted vest: no evidence either way
                 st.vest_votes.append(vote)
                 st.vest_status = p["vest"] = smooth_vest(st.vest_votes, cfg)
                 checks["vest"] = st.vest_status
