@@ -4,7 +4,7 @@
 
 ![results on construction-site images](assets/results_panel.jpg)
 
-*Released model on held-out construction-site images. Green `OK`: hard hat and vest worn. Red: what is missing (`no vest`, `no helmet`, `not hard hat` = non-work headwear). Grey `?`: cannot be judged (operator in a cab, person too small or hidden), and `? vest`: a vest detected with too little confidence to be trusted (bottom middle: a worker in red clothing, not accepted as wearing a vest). Yellow: machines and vehicles.*
+*Released model on held-out construction-site images, checking what a construction site requires: hard hat and vest. Masks are checked only in zones that require them (a paint room in `configs/site_safety_zones.json`, or `--requires helmet vest mask`), so they are not judged here. Green `OK`: hard hat and vest worn. Red: what is missing (`no vest`, `no helmet`, `not hard hat` = non-work headwear). Grey `?`: cannot be judged (operator in a cab, person too small or hidden), and `? vest`: a vest detected with too little confidence to be trusted (bottom middle: a worker in red clothing, not accepted as wearing a vest). Yellow: machines and vehicles.*
 
 | Part | What is implemented |
 |---|---|
@@ -45,9 +45,13 @@ Most remaining misses are **people the detector does not find at all** (tight gr
 
 Detector, mAP50 per class on the test split:
 
-| person | helmet | no_helmet | other_headwear | vest | no_vest | mask | no_mask | machinery | vehicle | safety_cone | **all** |
-|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 0.75 | 0.84 | 0.52 | 0.73 | 0.89 | 0.77 | 0.79 | 0.84 | 0.82 | 0.50 | 0.46 | **0.72** |
+| person | helmet | no_helmet | other_headwear | vest | no_vest |
+|---:|---:|---:|---:|---:|---:|
+| 0.75 | 0.84 | 0.52 | 0.73 | 0.89 | 0.77 |
+
+| mask | no_mask | machinery | vehicle | safety_cone | **all classes** |
+|---:|---:|---:|---:|---:|---:|
+| 0.79 | 0.84 | 0.82 | 0.50 | 0.46 | **0.72** |
 
 Vehicles and cones are the weakest classes (recall 0.36 and 0.41: few examples in the data); the cone rule remembers cones for 3 s to bridge missed detections. `no_helmet` is weak too, which is why a missing hard hat is also inferred from a clearly visible head (next section).
 
@@ -134,12 +138,12 @@ Per-epoch tables (box, cls and dfl losses, train and validation, and validation 
 
 ## Edge deployment: ONNX, INT8 and C++
 
-**Released model on CPU** (AMD Ryzen 9 7900X, 12 cores; 960 px input, hand-written ONNX Runtime pipeline, `scripts/latency_onnx.py`):
+**Released model on CPU** (AMD Ryzen 9 7900X, 12 cores; 960 px input, hand-written ONNX Runtime pipeline, `scripts/latency_onnx.py`; times per image, Pre / Post = pre- and post-processing):
 
-| Model | Size | Pre-processing | Inference | Post-processing | Total (mean) | p95 | FPS |
+| Model | Size | Pre | Inference | Post | Total | p95 | FPS |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| `site11hh_v2.onnx` (FP32) | 13.0 MB | 13.3 ms | 75.2 ms | 0.7 ms | 89.2 ms | 127.2 ms | 11.2 |
-| **`site11hh_v2_int8.onnx`** | **3.9 MB** | 6.1 ms | **39.1 ms** | 0.7 ms | **45.9 ms** | 70.8 ms | **21.8** |
+| FP32 | 13.0 MB | 13.3 ms | 75.2 ms | 0.7 ms | 89.2 ms | 127.2 ms | 11.2 |
+| **INT8** | **3.9 MB** | 6.1 ms | **39.1 ms** | 0.7 ms | **45.9 ms** | 70.8 ms | **21.8** |
 
 **INT8 is 1.9× faster and 3.3× smaller.** At 960 px the network itself is most of the time, so quantization pays off much more than in the 640 px engine benchmark below. The server is shared, which explains the wide p95 and the different pre-processing times (the same code runs in both rows).
 
