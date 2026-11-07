@@ -15,7 +15,7 @@ Images: [Construction Site Safety](https://www.kaggle.com/datasets/snehilsanyal/
 | **Tracking and zones** | ByteTrack IDs, polygon zones that each list the PPE they require, one alert per incident, evidence crops, JSON logs |
 | **Evaluation** | Per-worker evaluation (not only mAP), an external dataset with a held-out part, before / after per image, a control training run |
 | **Edge deployment** | ONNX export, hand-written pre/post-processing and NMS in Python and C++, static INT8 quantization (1.9× faster, 3.3× smaller), FastAPI service in Docker without PyTorch |
-| **Scene agent** | LLM with tool calling over the tracker logs + a VLM that checks each violation's evidence crop; runs locally with Ollama |
+| **Scene agent** | LLM with tool calling over the tracker logs + a VLM that can check a violation's evidence crop; runs locally with Ollama |
 | **Quality** | 87 unit tests (detector post-processing, rules, hazards, zones, REST API, agent, dataset scripts), GitHub Actions CI |
 
 ---
@@ -67,7 +67,7 @@ Vehicles and cones are the weakest classes (recall 0.36 and 0.41: few examples i
 5. **Apply the zone rule.** Each zone lists what it requires (`configs/site_safety_zones.json`: `"requires": ["helmet", "vest"]`, a paint room adds `"mask"`). A missing item inside such a zone for ≥ 1 s gives **one** violation, re-armed only when the worker leaves or the item is seen again for 2 s.
 6. **Save evidence.** The worker's crop goes to `evidence/`, and the violation records how it was decided (`detected` or `inferred_from_absence`). The agent's `inspect_violation` tool asks the vision model to check the crop.
 
-`unknown` (head hidden, too small, turned away) never raises an alert: in a safety system, false alarms make people ignore the alerts. Unknowns are still logged for review.
+`unknown` (head hidden, too small, turned away) never raises an alert: in a safety system, false alarms make people ignore the alerts. Unknowns are still logged (per-frame status in `tracks.jsonl`) for review.
 
 **Hazards around people** (`--hazards`, `src/epa/hazards.py`):
 
@@ -213,7 +213,7 @@ With `-v`, every tool call is printed: for this question the agent lists the vio
 **Tools:** `get_video_summary`, `count_events`, `zone_occupancy`, `objects_at`, `track_history`, `list_violations`, `ppe_status_at`, `inspect_violation`, `look_at_frame`.
 
 - The LLM sees tool results, never raw logs: the context stays small for long videos, and every number in an answer can be traced to a tool call (`-v` prints them).
-- Alerts inferred from absence are sent to the VLM first; it looks at the head itself, which also catches cases one camera cannot resolve (the helmet of a worker hidden behind another one).
+- The agent is told that alerts inferred from absence (no hard hat or vest found, rather than a bare head detected) most need the VLM check: the VLM looks at the worker itself, which can also catch cases one camera cannot resolve (the helmet of a worker hidden behind another one).
 - The client speaks the OpenAI-compatible chat API: a local Ollama server (default, free, offline), vLLM, LM Studio or a hosted API.
 
 ---
