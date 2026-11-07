@@ -127,10 +127,12 @@ The control run's curves are a clean reference: train and validation losses fall
 
 ![training curves, single 100-epoch run](assets/training/site_final_curves.png)
 
-| Ultralytics plots (released model) | |
+| Ultralytics plots (released model, validation split) | |
 |---|---|
 | ![results](assets/training/results.png) | ![confusion matrix](assets/training/confusion_matrix_normalized.png) |
 | ![precision-recall](assets/training/BoxPR_curve.png) | ![F1-confidence](assets/training/BoxF1_curve.png) |
+
+*Drawn by Ultralytics at the end of training, on the **validation** split (all classes mAP50 0.79). The tables above use the **test** split (0.72), which was not used to choose the best epoch. The loss curves above are drawn by `scripts/training_report.py` from the `results.csv` that Ultralytics writes after each epoch.*
 
 Per-epoch tables (box, cls and dfl losses, train and validation, and validation metrics): [`docs/training/site11hh_v2_epochs.md`](docs/training/site11hh_v2_epochs.md), [`docs/training/site_final_epochs.md`](docs/training/site_final_epochs.md). Interactive: `python scripts/training_report.py --run site11hh_v2 site_final --tensorboard && tensorboard --logdir runs/tensorboard`.
 
@@ -304,7 +306,7 @@ The released model is the fourth generation. The earlier steps are kept here bec
 | Real vests recognised (rest: `?`) ↑ | 87 % | 87 % | 84 % | **67 %** | 56 % |
 | The two shirts | `OK` | `OK` | 1 `OK` | **`?`** | `?` |
 
-0.6 is the lowest value that removes both errors. Because a weak vest becomes `unknown` and not "no vest", false alarms do not change; the cost is more `?` on single images. In a safety system an uncertain "I don't know", which goes to review (or to the VLM), is preferable to a wrong `OK`, which nobody looks at.
+0.6 is the lowest value that removes both errors. The sweep was run on the test split, but the value was chosen to remove the two external errors, and it lowers the test score instead of raising it, so the test numbers are not flattered by the choice. Because a weak vest becomes `unknown` and not "no vest", false alarms do not change; the cost is more `?` on single images. In a safety system an uncertain "I don't know", which goes to review (or to the VLM), is preferable to a wrong `OK`, which nobody looks at.
 
 ---
 
