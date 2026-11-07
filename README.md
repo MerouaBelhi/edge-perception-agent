@@ -1,6 +1,6 @@
 # Edge Perception Agent
 
-**Real-time worker-safety monitoring for construction sites, built to run on a CPU.** A YOLOv8n detector, multi-object tracking and per-worker decision rules flag missing hard hats, high-visibility vests and masks, non-work headwear (caps, sun hats, bicycle helmets), workers too close to machinery and people inside coned-off areas. Inference runs with ONNX Runtime in Python and C++, with INT8 quantization, and an LLM + vision-language agent answers questions about the video and double-checks each alert.
+**Real-time worker-safety monitoring for construction sites, built to run on a CPU.** A YOLOv8n detector, multi-object tracking and per-worker decision rules flag missing hard hats, high-visibility vests and masks, non-work headwear (caps, sun hats, bicycle helmets), workers too close to machinery and people inside coned-off areas. Inference runs with ONNX Runtime in Python and C++, with INT8 quantization, and an LLM + vision-language agent answers questions about the video and can check each alert on its evidence image.
 
 ![results on construction-site images](assets/results_panel.jpg)
 
@@ -119,7 +119,7 @@ The two are close: the single run is slightly better on the external sites and w
 
 ### Training diagnostics
 
-`site11hh_v2`: 40 epochs at 960 px from `site11_960`, best epoch 38 (validation mAP50 0.787, mAP50-95 0.515; its validation split includes 200 Hard Hat Workers images, so these numbers are not comparable to earlier models). Train and validation losses fall together to the end (val box 1.51 → 1.43, val cls 1.05 → 0.90): no overfitting. The step in train cls loss at epoch 31 is mosaic augmentation switched off for the last 10 epochs (`close_mosaic`), not an anomaly.
+`site11hh_v2`: 40 epochs at 960 px from `site11_960`, best epoch 38 (validation mAP50 0.787, mAP50-95 0.515; its validation split includes 200 Hard Hat Workers images, so these numbers are not comparable to earlier models). Train and validation losses fall together to the end (val box 1.31 → 1.21, val cls 1.05 → 0.90, val dfl 1.52 → 1.43): no overfitting. The step in train cls loss at epoch 31 is mosaic augmentation switched off for the last 10 epochs (`close_mosaic`), not an anomaly.
 
 ![training curves, released model](assets/training/site11hh_v2_curves.png)
 
@@ -151,7 +151,7 @@ Per-epoch tables (box, cls and dfl losses, train and validation, and validation 
 
 **INT8 accuracy on the safety task** (same rules, same images, `scripts/eval_safety.py` and `scripts/external_test.py`):
 
-| | FP32 (12.9 MB) | INT8 (3.9 MB) |
+| | FP32 (13.0 MB) | INT8 (3.9 MB) |
 |---|---:|---:|
 | Test: bare heads caught ↑ | 65 % | 65 % |
 | Test: bare heads called "helmet" ↓ | 0 % | 0 % |
@@ -166,7 +166,7 @@ Per-epoch tables (box, cls and dfl losses, train and validation, and validation 
 | External: false alarms on hard hats ↓ / hard hats recognised ↑ | 1 % / 70 % | 2 % / 69 % |
 | External: hard hats on people not detected ↓ | 560 | 583 |
 
-INT8 keeps the safety-critical behaviour (bare heads caught, nothing missing accepted as worn) but **loses some detections**: a few more people go undetected and fewer vests and hard hats are found. Vests suffer most: a vest that is not detected on a clearly visible torso becomes a "no vest" alarm (2 % → 7 %). The model is therefore shipped in both versions: FP32 where accuracy matters, INT8 on small devices. Next steps to close the gap: more calibration images, keeping the most sensitive layers in float, or quantization-aware training.
+INT8 keeps most of the safety-critical behaviour (as many bare heads caught, no missing vest or mask accepted, no bare head accepted on the test split; 4 % instead of 3 % on the external images) but **loses some detections**: a few more people go undetected and fewer vests and hard hats are found. Vests suffer most: a vest that is not detected on a clearly visible torso becomes a "no vest" alarm (2 % → 7 %). The model is therefore shipped in both versions: FP32 where accuracy matters, INT8 on small devices. Next steps to close the gap: more calibration images, keeping the most sensitive layers in float, or quantization-aware training.
 
 **Engine benchmark** (COCO `yolov8n`, 640 px, batch 1, end-to-end incl. pre/post-processing, `scripts/benchmark.py`):
 
@@ -196,13 +196,12 @@ INT8 keeps the safety-critical behaviour (bare heads caught, nothing missing acc
 
 ## Scene agent: ask questions about the video
 
-```text
-$ python -m epa.agent --run results/site -v \
+```bash
+python -m epa.agent --run results/site -v \
     -q "Which workers entered the site without a hard hat, and is each alert real?"
-  -> list_violations({"zone": "construction_site"})
-  -> inspect_violation({"violation_id": 0})
-  -> inspect_violation({"violation_id": 1})
 ```
+
+With `-v`, every tool call is printed: for this question the agent lists the violations (`list_violations`), then sends each one's evidence crop to the vision model (`inspect_violation`).
 
 | Question type | Answered by | Why |
 |---|---|---|
@@ -353,6 +352,8 @@ scripts/
   training_report.py      per-epoch table, loss curves, TensorBoard logs
   collect_assets.py       copy README figures and tables out of runs/ (git-ignored)
   export_onnx.py, quantize_int8.py, compare_int8.py, benchmark.py, latency_onnx.py
+  ppe_scores.py           scores of every PPE box in an image (used to find the vest threshold)
+  make_panel.py, find_panel_sources.py   README figures
   concat_videos.py, to_h264.py, make_gif.py, zone_helper.py   video and zone utilities
 tests/               unit tests (pytest)
 docs/training/       per-epoch tables and evaluation results
@@ -367,6 +368,7 @@ docs/training/       per-epoch tables and evaluation results
 - [ ] Ground-plane calibration (homography) for distances in metres
 - [ ] More on-site bare heads, machines and cones in the training data; motorcycle helmets
 - [ ] Pose estimation (YOLOv8-pose) for falls and unsafe postures
+- [ ] A recorded construction-site video: README demo and a full agent transcript
 - [ ] Video streams and the scene agent in the REST API
 
 ## License
