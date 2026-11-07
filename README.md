@@ -15,7 +15,7 @@
 | **Evaluation** | Per-worker evaluation (not only mAP), an external dataset with a held-out part, before / after per image, a control training run |
 | **Edge deployment** | ONNX export, hand-written pre/post-processing and NMS in Python and C++, static INT8 quantization (1.9× faster, 3.3× smaller), FastAPI service in Docker without PyTorch |
 | **Scene agent** | LLM with tool calling over the tracker logs + a VLM that checks each violation's evidence crop; runs locally with Ollama |
-| **Quality** | 81 unit tests (detector post-processing, rules, hazards, zones, agent, dataset scripts), GitHub Actions CI |
+| **Quality** | 87 unit tests (detector post-processing, rules, hazards, zones, REST API, agent, dataset scripts), GitHub Actions CI |
 
 ---
 
@@ -268,14 +268,17 @@ The engine reads the input size and class names from the ONNX file, so the same 
 
 ### REST API (Docker)
 
+A web service that checks an image sent over HTTP, so other programs (a camera, a phone app, a site dashboard) can use the system without Python or PyTorch. Put a model in `models/` first (`site11hh_v2_int8.onnx` from the Releases page), then:
+
 ```bash
 docker build -t edge-perception-agent .
 docker run -p 8000:8000 edge-perception-agent
 curl -F file=@path/to/site.jpg "localhost:8000/detect?conf=0.3"
-curl -F file=@path/to/site.jpg localhost:8000/detect/annotated -o out.jpg
+curl -F file=@path/to/site.jpg localhost:8000/detect/annotated -o out.jpg            # decisions drawn
+curl -F file=@path/to/site.jpg "localhost:8000/detect/annotated?view=boxes" -o boxes.jpg # raw boxes
 ```
 
-Interactive docs at `http://localhost:8000/docs`.
+`/detect` returns JSON: one entry per worker with the decision (`hard_hat`, `vest`, and a label such as `OK`, `no vest`, `? vest`), plus every raw detection and the time per stage. `/detect/annotated` returns the image with each worker's decision drawn, the same single-image rules as `scripts/detect_images.py` (`view=boxes`: the raw detector boxes instead). Tracking, voting over time and zones need a video, so they stay in the video pipeline. Open `http://localhost:8000` for interactive docs where an image can be sent from the browser.
 
 ---
 
@@ -364,7 +367,7 @@ docs/training/       per-epoch tables and evaluation results
 - [ ] Ground-plane calibration (homography) for distances in metres
 - [ ] More on-site bare heads, machines and cones in the training data; motorcycle helmets
 - [ ] Pose estimation (YOLOv8-pose) for falls and unsafe postures
-- [ ] Agent endpoint in the REST API
+- [ ] Video streams and the scene agent in the REST API
 
 ## License
 
