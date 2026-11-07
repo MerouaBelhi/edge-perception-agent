@@ -28,6 +28,8 @@ def main():
     p.add_argument("--cell", type=int, nargs=2, default=(420, 420), metavar=("W", "H"))
     p.add_argument("--gap", type=int, default=6)
     p.add_argument("--out", default="assets/results_panel.jpg")
+    p.add_argument("--numbers", action="store_true",
+                   help="write the image number in each cell (contact sheet for choosing images)")
     a = p.parse_args()
 
     w, h = a.cell
@@ -36,7 +38,13 @@ def main():
         img = cv2.imread(f)
         if img is None:
             raise SystemExit(f"cannot read {f}")
-        cells.append(fit(img, w, h))
+        cell = fit(img, w, h)
+        if a.numbers:
+            n = str(len(cells) + 1)
+            cv2.rectangle(cell, (0, 0), (60, 44), (0, 0, 0), -1)
+            cv2.putText(cell, n, (8, 34), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2, cv2.LINE_AA)
+            print(f"{n:>3}  {f}")
+        cells.append(cell)
     rows = []
     for i in range(0, len(cells), a.cols):
         row = cells[i:i + a.cols]

@@ -4,7 +4,8 @@
 
 ![results on construction-site images](assets/results_panel.jpg)
 
-*Released model on held-out construction-site images, checking what a construction site requires: hard hat and vest. Masks are checked only in zones that require them (a paint room in `configs/site_safety_zones.json`, or `--requires helmet vest mask`), so they are not judged here. Green `OK`: hard hat and vest worn. Red: what is missing (`no vest`, `no helmet`, `not hard hat` = non-work headwear). Grey `?`: cannot be judged (operator in a cab, person too small or hidden), and `? vest`: a vest detected with too little confidence to be trusted (bottom middle: a worker in red clothing, not accepted as wearing a vest). Yellow: machines and vehicles.*
+*Released model on held-out construction-site images, checking what a construction site requires: hard hat and vest. Masks are checked only in zones that require them (a paint room in `configs/site_safety_zones.json`, or `--requires helmet vest mask`), so they are not judged here. Green `OK`: hard hat and vest worn. Red: what is missing (`no vest`, `no helmet`, `not hard hat` = non-work headwear). Grey `?`: cannot be judged (operator in a cab, person too small or hidden), and `? vest`: a vest detected with too little confidence to be trusted (see *Development history*, step 5). Yellow: machines and vehicles.
+Images: [Construction Site Safety](https://www.kaggle.com/datasets/snehilsanyal/construction-site-safety-image-dataset-roboflow) (Roboflow, via Kaggle), CC BY 4.0; boxes and labels drawn by this project.*
 
 | Part | What is implemented |
 |---|---|
@@ -96,7 +97,8 @@ Fix (`scripts/prepare_hardhat.py`): 500 images were set aside first and never tr
 
 ![before / after on held-out external images](assets/before_after.jpg)
 
-*Held-out external images, before (left) and after (right), with the full decision drawn (hard hat + vest). Before, coloured hard hats were judged "no helmet" or "not hard hat"; after, they are recognised, and the alert that remains, "no vest", is correct: these workers wear no high-visibility vest. The title bars count hard-hat decisions only, since this dataset labels heads, not vests. In the second row, a red and a pink shirt were first accepted as vests (`OK`); with the minimum vest score (*Development history*, step 5) they are now `? vest`: not accepted, and no false alarm. Also visible: a few people too small to judge (`?`), and mirrored copies at the bottom of each image, which come from the dataset's padding. Pairs chosen automatically (most improved), made with `scripts/compare_models.py --check-vest --panel 4`.*
+*Held-out external images, before (left) and after (right), with the full decision drawn (hard hat + vest). Before, coloured hard hats were judged "no helmet" or "not hard hat"; after, they are recognised, and the alert that remains, "no vest", is correct: these workers wear no high-visibility vest. The title bars count hard-hat decisions only, since this dataset labels heads, not vests. In the second row, a red and a pink shirt were first accepted as vests (`OK`); with the minimum vest score (*Development history*, step 5) they are now `? vest`: not accepted, and no false alarm. Also visible: a few people too small to judge (`?`), and mirrored copies at the bottom of each image, which come from the dataset's padding. Pairs chosen automatically among the most improved (`scripts/compare_models.py --check-vest`), leaving out an image with a third-party watermark.
+Images: [Hard Hat Workers](https://huggingface.co/datasets/Voxel51/hard-hat-detection) (Make ML, via Kaggle and Voxel51), CC0; boxes and labels drawn by this project.*
 
 On the original test split, v2 keeps its behaviour: bare heads called "helmet" 0 %, false alarms on hard hats 2 % (4 % before), hard hats recognised 87 % (83 %), bare heads caught 65 % (68 %). Two costs: 4 of the 191 workers in non-work headwear (2 %) are now accepted as wearing a hard hat (0 before), and the `helmet` *box* mAP50 on the test split fell from 0.96 to 0.84 while the per-worker decisions improved. With 16k extra hard hats in training, the helmet class became more permissive and partly learned the external dataset's box style (see the control experiment below).
 
@@ -318,8 +320,10 @@ The released model is the fourth generation. The earlier steps are kept here bec
 |---|---|---|
 | [Construction Site Safety](https://www.kaggle.com/datasets/snehilsanyal/construction-site-safety-image-dataset-roboflow) (Roboflow) | CC BY 4.0 | training and test (released model) |
 | [Open Images V7](https://storage.googleapis.com/openimages/web/index.html) | annotations CC BY 4.0, images CC BY 2.0 | non-work headwear and vehicles |
-| [Hard Hat Workers](https://huggingface.co/datasets/Voxel51/hard-hat-detection) (Voxel51) | CC0 | training + 500 held-out images (external test) |
+| [Hard Hat Workers](https://huggingface.co/datasets/Voxel51/hard-hat-detection) (Make ML; Kaggle andrewmvd; Voxel51) | CC0 | training + 500 held-out images (external test) |
 | [Construction-PPE](https://docs.ultralytics.com/datasets/detect/construction-ppe/) (Ultralytics) | AGPL-3.0 | first model only (`ppe3`), not the released one |
+
+The figures in this README show images from these datasets, with the source under each figure; images carrying a third-party watermark were left out. The training plots are produced by this project.
 
 Training uses [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics) (AGPL-3.0), so this project, including the released models, is distributed under the same license.
 
